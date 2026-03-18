@@ -1115,7 +1115,7 @@ func buildUnionTypeData(u *expr.Union, scope *codegen.NameScope, loc *codegen.Lo
 		primitiveAliasType, hasPrimitiveAlias := primitiveAliasGoType(nat.Attribute.Type)
 		_, isUserType := nat.Attribute.Type.(expr.UserType)
 		emitPrimitiveAlias := hasPrimitiveAlias && !isUserType && pkg == ""
-		kindConst := kindName + fieldName
+		kindConst := scope.Unique(kindName + fieldName)
 		fields[i] = &UnionFieldData{
 			Name:               nat.Name,
 			KindConst:          kindConst,
@@ -1188,7 +1188,7 @@ func buildViewUnionTypeData(u *expr.Union, scope *codegen.NameScope, loc *codege
 		primitiveAliasType, hasPrimitiveAlias := primitiveAliasGoType(nat.Attribute.Type)
 		_, isUserType := nat.Attribute.Type.(expr.UserType)
 		emitPrimitiveAlias := hasPrimitiveAlias && !isUserType
-		kindConst := kindName + fieldName
+		kindConst := scope.Unique(kindName + fieldName)
 		fields[i] = &UnionFieldData{
 			Name:               nat.Name,
 			KindConst:          kindConst,
