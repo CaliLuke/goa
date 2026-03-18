@@ -4,8 +4,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"goa.design/goa/v3/codegen/testdata"
 	"goa.design/goa/v3/codegen/testutil"
+	dsl "goa.design/goa/v3/dsl"
 	"goa.design/goa/v3/expr"
 )
 
@@ -89,6 +92,70 @@ func TestRecursiveValidationCode(t *testing.T) {
 		code := ValidationCode(&expr.AttributeExpr{Type: oneofT}, nil, ctx, true, false, true, "target")
 		code = FormatTestCode(t, "package foo\nfunc Validate() (err error){\n"+code+"}")
 		testutil.AssertGo(t, "testdata/golden/validation_union-with-format-validation.go.golden", code)
+	})
+
+	t.Run("constructor-union-validation", func(t *testing.T) {
+		ctx := NewAttributeContext(false, false, false, "", scope)
+		root := RunDSL(t, testdata.ConstructorUnionValidationDSL)
+		unionT := root.UserType("ConstructorUnionValidation")
+		code := ValidationCode(&expr.AttributeExpr{Type: unionT}, nil, ctx, true, false, false, "target")
+		code = FormatTestCode(t, "package foo\nfunc Validate() (err error){\n"+code+"}")
+		if !strings.Contains(code, "switch string(target.Choice.Kind())") {
+			t.Errorf("expected constructor union validation to switch on active branch, got %q", code)
+		}
+		if !strings.Contains(code, "ValidateConstructorUnionValidationText") {
+			t.Errorf("expected constructor union validation to call text branch validator, got %q", code)
+		}
+		if !strings.Contains(code, "ValidateConstructorUnionValidationJSON") {
+			t.Errorf("expected constructor union validation to call JSON branch validator, got %q", code)
+		}
+	})
+
+	t.Run("constructor-union-nested-validation", func(t *testing.T) {
+		ctx := NewAttributeContext(false, false, false, "", scope)
+		root := RunDSL(t, testdata.ConstructorUnionNestedValidationDSL)
+		unionT := root.UserType("ConstructorUnionNestedValidation")
+		code := ValidationCode(&expr.AttributeExpr{Type: unionT}, nil, ctx, true, false, false, "target")
+		code = FormatTestCode(t, "package foo\nfunc Validate() (err error){\n"+code+"}")
+		if !strings.Contains(code, "switch string(target.Choice.Kind())") {
+			t.Errorf("expected nested constructor union validation to switch on outer active branch, got %q", code)
+		}
+		outerText := root.UserType("ConstructorUnionNestedValidationOuterText")
+		outerCode := ValidationCode(&expr.AttributeExpr{Type: outerText}, nil, ctx, true, false, false, "actual")
+		outerCode = FormatTestCode(t, "package foo\nfunc ValidateOuter() (err error){\n"+outerCode+"}")
+		if !strings.Contains(outerCode, "switch string(actual.Inner.Kind())") {
+			t.Errorf("expected nested constructor union validation to switch on nested active branch, got %q", outerCode)
+		}
+		if !strings.Contains(outerCode, "ValidateConstructorUnionNestedValidationInnerText") {
+			t.Errorf("expected nested constructor union validation to call inner text validator, got %q", outerCode)
+		}
+		if !strings.Contains(outerCode, "ValidateConstructorUnionNestedValidationInnerJSON") {
+			t.Errorf("expected nested constructor union validation to call inner JSON validator, got %q", outerCode)
+		}
+	})
+
+	t.Run("constructor-union-tagged-validation", func(t *testing.T) {
+		ctx := NewAttributeContext(false, false, false, "", scope)
+		root := RunDSL(t, testdata.DeclarationAndConstructorUnionTaggedSymmetryDSL)
+		unionT := root.UserType("TaggedConstructorUnionContainer")
+		code := ValidationCode(&expr.AttributeExpr{Type: unionT}, nil, ctx, true, false, false, "target")
+		code = FormatTestCode(t, "package foo\nfunc Validate() (err error){\n"+code+"}")
+		require.Contains(t, code, "switch string(target.Choice.Kind())")
+		require.Contains(t, code, "case \"text\":")
+		require.Contains(t, code, "case \"json\":")
+		require.Contains(t, code, "goa.MissingFieldError(\"value\", \"target.Choice.value\")")
+	})
+
+	t.Run("invalid-constructor-union-fails-before-validation", func(t *testing.T) {
+		err := expr.RunInvalidDSL(t, func() {
+			dsl.Type("BrokenValidation", func() {
+				dsl.Attribute("choice", dsl.OneOf(dsl.String, 42))
+				dsl.Required("choice")
+			})
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "cannot use 42")
+		require.NotContains(t, err.Error(), "Validate")
 	})
 }
 

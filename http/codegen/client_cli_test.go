@@ -1,8 +1,13 @@
 package codegen
 
 import (
+	"bytes"
 	"goa.design/goa/v3/codegen/testutil"
+	"regexp"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"goa.design/goa/v3/codegen"
 	"goa.design/goa/v3/http/codegen/testdata"
@@ -57,5 +62,65 @@ func TestClientCLIFiles(t *testing.T) {
 			code := codegen.SectionCode(t, sections[c.SectionIndex])
 			testutil.AssertGo(t, "testdata/golden/client_cli_"+c.Name+".go.golden", code)
 		})
+	}
+}
+
+func TestConstructorUnionClientCLIFiles(t *testing.T) {
+	cases := []struct {
+		Name string
+		DSL  func()
+	}{
+		{"top-level", testdata.ConstructorUnionHTTPDSL},
+		{"custom-keys", testdata.ConstructorUnionCustomKeysHTTPDSL},
+		{"nested-top-level-custom-keys", testdata.NestedTopLevelConstructorUnionCustomKeysHTTPDSL},
+	}
+	for _, c := range cases {
+		t.Run(c.Name, func(t *testing.T) {
+			root := RunHTTPDSL(t, c.DSL)
+			services := CreateHTTPServices(root)
+			fs := ClientCLIFiles("", services)
+			require.GreaterOrEqual(t, len(fs), 2, "expected parser and payload builder files")
+
+			var builder bytes.Buffer
+			for _, s := range fs[1].SectionTemplates {
+				require.NoError(t, s.Write(&builder))
+			}
+			builderCode := codegen.FormatTestCode(t, builder.String())
+			if !strings.Contains(builderCode, "json.Unmarshal") {
+				t.Errorf("expected HTTP CLI payload builder to decode constructor union payload from JSON, got %q", builderCode)
+			}
+			if !strings.Contains(builderCode, "BuildShowPayload") {
+				t.Errorf("expected HTTP CLI payload builder to expose constructor union payload builder, got %q", builderCode)
+			}
+		})
+	}
+}
+
+func TestConstructorUnionClientCLIPayloadValidatorsExistInClientTypes(t *testing.T) {
+	root := RunHTTPDSL(t, testdata.ConstructorUnionClientValidatorReferenceHTTPDSL)
+	services := CreateHTTPServices(root)
+
+	cliFiles := ClientCLIFiles("", services)
+	require.GreaterOrEqual(t, len(cliFiles), 2, "expected parser and payload builder files")
+	var builder bytes.Buffer
+	for _, s := range cliFiles[1].SectionTemplates {
+		require.NoError(t, s.Write(&builder))
+	}
+	builderCode := codegen.FormatTestCode(t, builder.String())
+
+	typeFiles := ClientTypeFiles("", services)
+	require.NotEmpty(t, typeFiles, "expected client type files")
+	var types bytes.Buffer
+	for _, s := range typeFiles[0].SectionTemplates {
+		require.NoError(t, s.Write(&types))
+	}
+	typesCode := codegen.FormatTestCode(t, types.String())
+
+	re := regexp.MustCompile(`Validate([A-Za-z0-9]+RequestBody)\(`)
+	matches := re.FindAllStringSubmatch(builderCode, -1)
+	require.NotEmpty(t, matches, "expected constructor-union builder to reference request-body validators")
+	for _, match := range matches {
+		name := match[1]
+		require.Contains(t, typesCode, "func Validate"+name+"(", "missing client validator for %s", name)
 	}
 }

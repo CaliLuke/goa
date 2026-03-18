@@ -99,6 +99,50 @@ var UnionMethodDSL = func() {
 	})
 }
 
+var InlineUnionMethodDSL = func() {
+	var TextResult = Type("TextResult", func() {
+		Attribute("text", String)
+		Required("text")
+	})
+	var JSONResult = Type("JSONResult", func() {
+		Attribute("message", String)
+		Required("message")
+	})
+	Service("InlineUnionService", func() {
+		Method("Show", func() {
+			Payload(OneOf(TextResult, JSONResult))
+			Result(OneOf(TextResult, JSONResult))
+		})
+	})
+}
+
+var DeclarationAndInlineUnionMethodDSL = func() {
+	var TextPayload = Type("DeclarationAndInlineUnionTextPayload", func() {
+		Attribute("text", String)
+		Required("text")
+	})
+	var JSONPayload = Type("DeclarationAndInlineUnionJSONPayload", func() {
+		Attribute("message", String)
+		Required("message")
+	})
+	var DeclaredChoice = Type("DeclarationAndInlineUnionDeclaredChoice", func() {
+		OneOf("Value", func() {
+			Attribute("DeclarationAndInlineUnionTextPayload", TextPayload)
+			Attribute("DeclarationAndInlineUnionJSONPayload", JSONPayload)
+		})
+	})
+	Service("DeclarationAndInlineUnionService", func() {
+		Method("Declared", func() {
+			Payload(DeclaredChoice)
+			Result(DeclaredChoice)
+		})
+		Method("Constructed", func() {
+			Payload(OneOf(TextPayload, JSONPayload))
+			Result(OneOf(TextPayload, JSONPayload))
+		})
+	})
+}
+
 var MultiUnionMethodDSL = func() {
 	var TypeA = Type("TypeA", func() {
 		Attribute("a", Int)
@@ -116,6 +160,54 @@ var MultiUnionMethodDSL = func() {
 		Method("MultiUnion", func() {
 			Payload(Union)
 			Result(Union)
+		})
+	})
+}
+
+var RepeatedInlineUnionMethodDSL = func() {
+	var TextPayload = Type("RepeatedInlineUnionTextPayload", func() {
+		Attribute("text", String)
+		Required("text")
+	})
+	var JSONPayload = Type("RepeatedInlineUnionJSONPayload", func() {
+		Attribute("message", String)
+		Required("message")
+	})
+	var TextResult = Type("RepeatedInlineUnionTextResult", func() {
+		Attribute("text", String)
+		Required("text")
+	})
+	var JSONResult = Type("RepeatedInlineUnionJSONResult", func() {
+		Attribute("message", String)
+		Required("message")
+	})
+	Service("RepeatedInlineUnionService", func() {
+		Method("First", func() {
+			Payload(OneOf(TextPayload, JSONPayload))
+			Result(OneOf(TextResult, JSONResult))
+		})
+		Method("Second", func() {
+			Payload(OneOf(TextPayload, JSONPayload))
+			Result(OneOf(TextResult, JSONResult))
+		})
+	})
+}
+
+var NormalizedInlineUnionMethodDSL = func() {
+	var First = Type("NormalizedInlineUnionFirst", func() {
+		Meta("struct:type:name", "Foo Bar")
+		Attribute("text", String)
+		Required("text")
+	})
+	var Second = Type("NormalizedInlineUnionSecond", func() {
+		Meta("struct:type:name", "Foo-Bar")
+		Attribute("count", Int)
+		Required("count")
+	})
+	Service("NormalizedInlineUnionService", func() {
+		Method("Show", func() {
+			Payload(OneOf(First, Second))
+			Result(OneOf(First, Second))
 		})
 	})
 }

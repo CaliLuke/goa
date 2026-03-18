@@ -84,6 +84,70 @@ var UnaryRPCWithErrorsDSL = func() {
 	})
 }
 
+var ConstructorUnionUnaryRPCDSL = func() {
+	var TextPayload = Type("TextPayload", func() {
+		Field(1, "text", String)
+	})
+	var JSONPayload = Type("JSONPayload", func() {
+		Field(1, "message", String)
+	})
+	var TextResult = Type("TextResult", func() {
+		Field(1, "text", String)
+	})
+	var JSONResult = Type("JSONResult", func() {
+		Field(1, "message", String)
+	})
+
+	Service("ConstructorUnionUnaryRPC", func() {
+		Method("Show", func() {
+			Payload(OneOf(TextPayload, JSONPayload))
+			Result(OneOf(TextResult, JSONResult))
+			GRPC(func() {})
+		})
+	})
+}
+
+var ConstructorUnionBidirectionalStreamingRPCDSL = func() {
+	var TextStreamPayload = Type("TextStreamPayload", func() {
+		Field(1, "text", String)
+	})
+	var JSONStreamPayload = Type("JSONStreamPayload", func() {
+		Field(1, "message", String)
+	})
+	var TextStreamResult = Type("TextStreamResult", func() {
+		Field(1, "text", String)
+	})
+	var JSONStreamResult = Type("JSONStreamResult", func() {
+		Field(1, "message", String)
+	})
+
+	Service("ConstructorUnionBidirectionalStreamingRPC", func() {
+		Method("Stream", func() {
+			StreamingPayload(OneOf(TextStreamPayload, JSONStreamPayload))
+			StreamingResult(OneOf(TextStreamResult, JSONStreamResult))
+			GRPC(func() {})
+		})
+	})
+}
+
+var ConstructorUnionNormalizedProtoFieldNamesDSL = func() {
+	var FirstPayload = Type("FirstPayload", func() {
+		Meta("name:original", "foo_bar")
+		Field(1, "text", String)
+	})
+	var SecondPayload = Type("SecondPayload", func() {
+		Meta("name:original", "foo-bar")
+		Field(1, "message", String)
+	})
+
+	Service("ConstructorUnionNormalizedProtoFieldNames", func() {
+		Method("Show", func() {
+			Payload(OneOf(FirstPayload, SecondPayload))
+			GRPC(func() {})
+		})
+	})
+}
+
 var ElemValidationDSL = func() {
 	var PayloadType = Type("PayloadType", func() {
 		Field(1, "foo", MapOf(String, ArrayOf(String)), func() {

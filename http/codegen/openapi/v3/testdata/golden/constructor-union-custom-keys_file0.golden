@@ -1,0 +1,221 @@
+{
+  "components": {
+    "schemas": {
+      "JSONPayload": {
+        "example": {
+          "message": "Itaque inventore optio."
+        },
+        "properties": {
+          "message": {
+            "example": "Et tempora et quae.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      },
+      "JSONPayloadOrTextPayloadJSONPayloadEnvelope4d704eedbb85e23f": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/JSONPayload"
+          },
+          "kind": {
+            "enum": [
+              "JSONPayload"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "data"
+        ],
+        "type": "object"
+      },
+      "JSONPayloadOrTextPayloadTextPayloadEnvelope334b543111996e4c": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/TextPayload"
+          },
+          "kind": {
+            "enum": [
+              "TextPayload"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "data"
+        ],
+        "type": "object"
+      },
+      "TextPayload": {
+        "example": {
+          "text": "Doloribus qui quia."
+        },
+        "properties": {
+          "text": {
+            "example": "Quia molestias.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Goa API",
+    "version": "0.0.1"
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/": {
+      "post": {
+        "operationId": "ConstructorUnionCustomKeys#Show",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "data": {
+                  "message": "Doloremque autem."
+                },
+                "kind": "JSONPayload"
+              },
+              "schema": {
+                "discriminator": {
+                  "mapping": {
+                    "JSONPayload": "#/components/schemas/JSONPayloadOrTextPayloadJSONPayloadEnvelope4d704eedbb85e23f",
+                    "TextPayload": "#/components/schemas/JSONPayloadOrTextPayloadTextPayloadEnvelope334b543111996e4c"
+                  },
+                  "propertyName": "kind"
+                },
+                "example": {
+                  "data": {
+                    "message": "Doloremque autem."
+                  },
+                  "kind": "JSONPayload"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/JSONPayloadOrTextPayloadJSONPayloadEnvelope4d704eedbb85e23f"
+                  },
+                  {
+                    "$ref": "#/components/schemas/JSONPayloadOrTextPayloadTextPayloadEnvelope334b543111996e4c"
+                  }
+                ],
+                "properties": {
+                  "data": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/JSONPayload"
+                      },
+                      {
+                        "$ref": "#/components/schemas/TextPayload"
+                      }
+                    ]
+                  },
+                  "kind": {
+                    "enum": [
+                      "JSONPayload",
+                      "TextPayload"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "data"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": {
+                    "message": "Doloremque autem."
+                  },
+                  "kind": "JSONPayload"
+                },
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "JSONPayload": "#/components/schemas/JSONPayloadOrTextPayloadJSONPayloadEnvelope4d704eedbb85e23f",
+                      "TextPayload": "#/components/schemas/JSONPayloadOrTextPayloadTextPayloadEnvelope334b543111996e4c"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "example": {
+                    "data": {
+                      "message": "Doloremque autem."
+                    },
+                    "kind": "JSONPayload"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/JSONPayloadOrTextPayloadJSONPayloadEnvelope4d704eedbb85e23f"
+                    },
+                    {
+                      "$ref": "#/components/schemas/JSONPayloadOrTextPayloadTextPayloadEnvelope334b543111996e4c"
+                    }
+                  ],
+                  "properties": {
+                    "data": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/JSONPayload"
+                        },
+                        {
+                          "$ref": "#/components/schemas/TextPayload"
+                        }
+                      ]
+                    },
+                    "kind": {
+                      "enum": [
+                        "JSONPayload",
+                        "TextPayload"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "data"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK response."
+          }
+        },
+        "summary": "Show ConstructorUnionCustomKeys",
+        "tags": [
+          "ConstructorUnionCustomKeys"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "Default server for test api",
+      "url": "http://localhost:80"
+    }
+  ],
+  "tags": [
+    {
+      "name": "ConstructorUnionCustomKeys"
+    }
+  ]
+}

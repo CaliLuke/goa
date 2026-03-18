@@ -84,3 +84,74 @@ var TestUnionDSL = func() {
 		})
 	)
 }
+
+var ConstructorUnionCollectionsDSL = func() {
+	var TextPayload = Type("ConstructorUnionCollectionsTextPayload", func() {
+		Attribute("text", String)
+		Required("text")
+	})
+	var JSONPayload = Type("ConstructorUnionCollectionsJSONPayload", func() {
+		Attribute("message", String)
+		Required("message")
+	})
+	var Choice = OneOf(TextPayload, JSONPayload)
+
+	var _ = Type("ConstructorUnionCollections", func() {
+		Attribute("ArrayChoices", ArrayOf(Choice))
+		Attribute("MapChoices", MapOf(String, Choice))
+	})
+}
+
+var DeclarationAndConstructorUnionSymmetryDSL = func() {
+	var TextPayload = Type("DeclarationConstructorTextPayload", func() {
+		Attribute("text", String)
+		Required("text")
+	})
+	var JSONPayload = Type("DeclarationConstructorJSONPayload", func() {
+		Attribute("message", String)
+		Required("message")
+	})
+	var DeclaredChoice = Type("DeclarationConstructorDeclaredChoice", func() {
+		OneOf("Value", func() {
+			Attribute("DeclarationConstructorTextPayload", TextPayload)
+			Attribute("DeclarationConstructorJSONPayload", JSONPayload)
+		})
+	})
+
+	var _ = Type("DeclarationUnionContainer", func() {
+		Attribute("Choice", DeclaredChoice)
+		Required("Choice")
+	})
+	var _ = Type("ConstructorUnionContainer", func() {
+		Attribute("Choice", OneOf(TextPayload, JSONPayload))
+		Required("Choice")
+	})
+}
+
+var DeclarationAndConstructorUnionTaggedSymmetryDSL = func() {
+	var TextPayload = Type("TaggedDeclarationConstructorTextPayload", func() {
+		Meta("oneof:type:tag", "text")
+		Attribute("text", String)
+		Required("text")
+	})
+	var JSONPayload = Type("TaggedDeclarationConstructorJSONPayload", func() {
+		Meta("oneof:type:tag", "json")
+		Attribute("message", String)
+		Required("message")
+	})
+	var DeclaredChoice = Type("TaggedDeclarationConstructorDeclaredChoice", func() {
+		OneOf("Value", func() {
+			Attribute("TaggedDeclarationConstructorTextPayload", TextPayload)
+			Attribute("TaggedDeclarationConstructorJSONPayload", JSONPayload)
+		})
+	})
+
+	var _ = Type("TaggedDeclarationUnionContainer", func() {
+		Attribute("Choice", DeclaredChoice)
+		Required("Choice")
+	})
+	var _ = Type("TaggedConstructorUnionContainer", func() {
+		Attribute("Choice", OneOf(TextPayload, JSONPayload))
+		Required("Choice")
+	})
+}

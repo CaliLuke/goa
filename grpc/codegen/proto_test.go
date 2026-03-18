@@ -89,6 +89,58 @@ func TestMessageDefSection(t *testing.T) {
 	}
 }
 
+func TestConstructorUnionUnaryRPCProtoFiles(t *testing.T) {
+	root := RunGRPCDSL(t, testdata.ConstructorUnionUnaryRPCDSL)
+	services := CreateGRPCServices(root)
+	fs := ProtoFiles("", services)
+	require.Len(t, fs, 1)
+
+	sections := fs[0].SectionTemplates
+	require.GreaterOrEqual(t, len(sections), 3)
+
+	code := sectionCode(t, sections[1:]...)
+	assert.Contains(t, code, "oneof")
+
+	fpath := codegen.CreateTempFile(t, code)
+	assert.NoError(t, protoc(defaultProtocCmd, fpath, nil), "error occurred when compiling constructor union proto file %q", fpath)
+}
+
+func TestConstructorUnionBidirectionalStreamingRPCProtoFiles(t *testing.T) {
+	root := RunGRPCDSL(t, testdata.ConstructorUnionBidirectionalStreamingRPCDSL)
+	services := CreateGRPCServices(root)
+	fs := ProtoFiles("", services)
+	require.Len(t, fs, 1)
+
+	sections := fs[0].SectionTemplates
+	require.GreaterOrEqual(t, len(sections), 3)
+
+	code := sectionCode(t, sections[1:]...)
+	assert.Contains(t, code, "oneof")
+	assert.Contains(t, code, "rpc Stream")
+	assert.Contains(t, code, "stream StreamStreamingRequest")
+	assert.Contains(t, code, "stream StreamResponse")
+
+	fpath := codegen.CreateTempFile(t, code)
+	assert.NoError(t, protoc(defaultProtocCmd, fpath, nil), "error occurred when compiling constructor union streaming proto file %q", fpath)
+}
+
+func TestConstructorUnionNormalizedProtoFieldNames(t *testing.T) {
+	root := RunGRPCDSL(t, testdata.ConstructorUnionNormalizedProtoFieldNamesDSL)
+	services := CreateGRPCServices(root)
+	fs := ProtoFiles("", services)
+	require.Len(t, fs, 1)
+
+	sections := fs[0].SectionTemplates
+	require.GreaterOrEqual(t, len(sections), 3)
+
+	code := sectionCode(t, sections[1:]...)
+	assert.Contains(t, code, " foo_bar = ")
+	assert.Contains(t, code, " foo_bar_2 = ")
+
+	fpath := codegen.CreateTempFile(t, code)
+	assert.NoError(t, protoc(defaultProtocCmd, fpath, nil), "error occurred when compiling normalized constructor union proto file %q", fpath)
+}
+
 func TestProtoc(t *testing.T) {
 	const code = testdata.UnaryRPCsProtoCode
 

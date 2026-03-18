@@ -1,0 +1,200 @@
+{
+  "components": {
+    "schemas": {
+      "ExamplePayload": {
+        "example": {
+          "choice": {
+            "type": "JSONPayload",
+            "value": {
+              "message": "hello"
+            }
+          }
+        },
+        "properties": {
+          "choice": {
+            "discriminator": {
+              "mapping": {
+                "JSONPayload": "#/components/schemas/JSONPayloadOrTextPayloadJSONPayloadEnvelope273448a81d4e8596",
+                "TextPayload": "#/components/schemas/JSONPayloadOrTextPayloadTextPayloadEnvelopeab7266b0a01ac8ab"
+              },
+              "propertyName": "type"
+            },
+            "example": {
+              "type": "JSONPayload",
+              "value": {
+                "message": "hello"
+              }
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JSONPayloadOrTextPayloadJSONPayloadEnvelope273448a81d4e8596"
+              },
+              {
+                "$ref": "#/components/schemas/JSONPayloadOrTextPayloadTextPayloadEnvelopeab7266b0a01ac8ab"
+              }
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "JSONPayload",
+                  "TextPayload"
+                ],
+                "type": "string"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/JSONPayload"
+                  },
+                  {
+                    "$ref": "#/components/schemas/TextPayload"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "value"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "choice"
+        ],
+        "type": "object"
+      },
+      "JSONPayload": {
+        "example": {
+          "message": "Itaque inventore optio."
+        },
+        "properties": {
+          "message": {
+            "example": "Et tempora et quae.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      },
+      "JSONPayloadOrTextPayloadJSONPayloadEnvelope273448a81d4e8596": {
+        "properties": {
+          "type": {
+            "enum": [
+              "JSONPayload"
+            ],
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/JSONPayload"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ],
+        "type": "object"
+      },
+      "JSONPayloadOrTextPayloadTextPayloadEnvelopeab7266b0a01ac8ab": {
+        "properties": {
+          "type": {
+            "enum": [
+              "TextPayload"
+            ],
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/TextPayload"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ],
+        "type": "object"
+      },
+      "TextPayload": {
+        "example": {
+          "text": "Doloribus qui quia."
+        },
+        "properties": {
+          "text": {
+            "example": "Quia molestias.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Goa API",
+    "version": "0.0.1"
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/": {
+      "post": {
+        "operationId": "ConstructorUnionUserExampleSecondBranch#Show",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "choice": {
+                  "type": "JSONPayload",
+                  "value": {
+                    "message": "hello"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ExamplePayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "choice": {
+                    "type": "JSONPayload",
+                    "value": {
+                      "message": "hello"
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ExamplePayload"
+                }
+              }
+            },
+            "description": "OK response."
+          }
+        },
+        "summary": "Show ConstructorUnionUserExampleSecondBranch",
+        "tags": [
+          "ConstructorUnionUserExampleSecondBranch"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "Default server for test api",
+      "url": "http://localhost:80"
+    }
+  ],
+  "tags": [
+    {
+      "name": "ConstructorUnionUserExampleSecondBranch"
+    }
+  ]
+}

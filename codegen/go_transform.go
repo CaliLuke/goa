@@ -81,12 +81,12 @@ func transformAttribute(source, target *expr.AttributeExpr, sourceVar, targetVar
 		return
 	}
 	switch {
+	case expr.IsUnion(source.Type):
+		code, err = transformUnion(source, target, sourceVar, targetVar, newVar, unionVarIsPointer(source, ta.SourceCtx), ta)
 	case expr.IsArray(source.Type):
 		code, err = transformArray(expr.AsArray(source.Type), expr.AsArray(target.Type), sourceVar, targetVar, newVar, ta)
 	case expr.IsMap(source.Type):
 		code, err = transformMap(expr.AsMap(source.Type), expr.AsMap(target.Type), sourceVar, targetVar, newVar, ta)
-	case expr.IsUnion(source.Type):
-		code, err = transformUnion(source, target, sourceVar, targetVar, newVar, ta)
 	case expr.IsObject(source.Type):
 		code, err = transformObject(source, target, sourceVar, targetVar, newVar, ta)
 	default:
@@ -220,7 +220,7 @@ func transformObject(source, target *expr.AttributeExpr, sourceVar, targetVar st
 			case expr.IsMap(srcc.Type):
 				code, err = transformMap(expr.AsMap(srcc.Type), expr.AsMap(tgtc.Type), srcVar, tgtVar, false, ta)
 			case expr.IsUnion(srcc.Type):
-				code, err = transformUnion(srcc, tgtc, srcVar, tgtVar, false, ta)
+				code, err = transformUnion(srcc, tgtc, srcVar, tgtVar, false, false, ta)
 			case ok:
 				if ta.TargetCtx.IsInterface {
 					ref := ta.TargetCtx.Scope.Ref(target, ta.TargetCtx.Pkg(target))
@@ -444,7 +444,7 @@ func transformMap(source, target *expr.Map, sourceVar, targetVar string, newVar 
 // Note: transport to/from service transforms are always object to union or
 // union to object. The only case a transform is union to union is when
 // converting a projected type from/to a service type.
-func transformUnion(source, target *expr.AttributeExpr, sourceVar, targetVar string, newVar bool, ta *TransformAttrs) (string, error) {
+func transformUnion(source, target *expr.AttributeExpr, sourceVar, targetVar string, newVar, sourceIsPointer bool, ta *TransformAttrs) (string, error) {
 	if !expr.IsUnion(target.Type) {
 		return "", fmt.Errorf("cannot transform union %s to non-union %s", source.Type.Name(), target.Type.Name())
 	}
@@ -497,7 +497,7 @@ func transformUnion(source, target *expr.AttributeExpr, sourceVar, targetVar str
 			}
 		}
 		cases = append(cases, map[string]any{
-			"CaseName":        st.Name,
+			"CaseName":        expr.UnionVariantTag(st),
 			"SourceFieldName": Goify(st.Name, true),
 			"TargetFieldName": Goify(tt.Name, true),
 			"SourceAttr":      st.Attribute,
@@ -510,6 +510,7 @@ func transformUnion(source, target *expr.AttributeExpr, sourceVar, targetVar str
 
 	data := map[string]any{
 		"SourceVar":       sourceVar,
+		"SourceIsPointer": sourceIsPointer,
 		"TargetVar":       targetVar,
 		"NewVar":          newVar,
 		"TypeRef":         typeRef,
@@ -525,6 +526,10 @@ func transformUnion(source, target *expr.AttributeExpr, sourceVar, targetVar str
 		return "", err
 	}
 	return buf.String(), nil
+}
+
+func unionVarIsPointer(att *expr.AttributeExpr, ctx *AttributeContext) bool {
+	return strings.HasPrefix(ctx.Scope.Ref(att, ctx.Pkg(att)), "*")
 }
 
 // transformAttributeHelpers returns the Go transform functions and their definitions
@@ -668,7 +673,9 @@ func generateHelper(source, target *expr.AttributeExpr, req bool, ta *TransformA
 	if err != nil {
 		return nil, err
 	}
-	if !req && !expr.IsPrimitive(source.Type) {
+	if ta.SourceCtx.Pointer && !expr.IsPrimitive(source.Type) {
+		code = "if v == nil {\n\treturn nil\n}\n" + code
+	} else if !req && !expr.IsPrimitive(source.Type) {
 		code = "if v == nil {\n\treturn nil\n}\n" + code
 	}
 	tfd := &TransformFunctionData{

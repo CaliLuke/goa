@@ -76,3 +76,99 @@ func TestGoTransformUnionError(t *testing.T) {
 		})
 	}
 }
+
+func TestGoTransformConstructorUnionCollections(t *testing.T) {
+	root := RunDSL(t, testdata.ConstructorUnionCollectionsDSL)
+	scope := NewNameScope()
+	defaultCtx := NewAttributeContext(false, false, true, "", scope)
+
+	collections := root.UserType("ConstructorUnionCollections")
+	require.NotNil(t, collections)
+
+	code, funcs, err := GoTransform(&expr.AttributeExpr{Type: collections}, &expr.AttributeExpr{Type: collections}, "source", "target", defaultCtx, defaultCtx, "", true)
+	require.NoError(t, err)
+	require.Len(t, funcs, 2)
+	require.ElementsMatch(t, []string{
+		"transformConstructorUnionCollectionsJSONPayloadToConstructorUnionCollectionsJSONPayload",
+		"transformConstructorUnionCollectionsTextPayloadToConstructorUnionCollectionsTextPayload",
+	}, []string{funcs[0].Name, funcs[1].Name})
+
+	code = FormatTestCode(t, "package foo\nfunc transform(){\n"+code+"}")
+	testutil.AssertGo(t, "testdata/golden/go_transform_union_ConstructorUnionCollections to ConstructorUnionCollections.go.golden", code)
+}
+
+func TestGoTransformDeclarationConstructorUnionSymmetry(t *testing.T) {
+	root := RunDSL(t, testdata.DeclarationAndConstructorUnionSymmetryDSL)
+	scope := NewNameScope()
+	defaultCtx := NewAttributeContext(false, false, true, "", scope)
+
+	declared := root.UserType("DeclarationUnionContainer").Attribute().Find("Choice").Find("Value")
+	constructor := root.UserType("ConstructorUnionContainer").Attribute().Find("Choice")
+	require.NotNil(t, declared)
+	require.NotNil(t, constructor)
+
+	cases := []struct {
+		Name   string
+		Source *expr.AttributeExpr
+		Target *expr.AttributeExpr
+	}{
+		{"Declaration to Constructor", declared, constructor},
+		{"Constructor to Declaration", constructor, declared},
+	}
+
+	for _, c := range cases {
+		t.Run(c.Name, func(t *testing.T) {
+			code, _, err := GoTransform(c.Source, c.Target, "source", "target", defaultCtx, defaultCtx, "", true)
+			require.NoError(t, err)
+			code = FormatTestCode(t, "package foo\nfunc transform(){\n"+code+"}")
+			testutil.AssertGo(t, "testdata/golden/go_transform_union_"+c.Name+".go.golden", code)
+		})
+	}
+}
+
+func TestGoTransformDeclarationConstructorUnionTaggedSymmetry(t *testing.T) {
+	root := RunDSL(t, testdata.DeclarationAndConstructorUnionTaggedSymmetryDSL)
+	scope := NewNameScope()
+	defaultCtx := NewAttributeContext(false, false, true, "", scope)
+
+	declared := root.UserType("TaggedDeclarationUnionContainer").Attribute().Find("Choice").Find("Value")
+	constructor := root.UserType("TaggedConstructorUnionContainer").Attribute().Find("Choice")
+	require.NotNil(t, declared)
+	require.NotNil(t, constructor)
+
+	cases := []struct {
+		Name   string
+		Source *expr.AttributeExpr
+		Target *expr.AttributeExpr
+	}{
+		{"Tagged Declaration to Constructor", declared, constructor},
+		{"Tagged Constructor to Declaration", constructor, declared},
+	}
+
+	for _, c := range cases {
+		t.Run(c.Name, func(t *testing.T) {
+			code, _, err := GoTransform(c.Source, c.Target, "source", "target", defaultCtx, defaultCtx, "", true)
+			require.NoError(t, err)
+			code = FormatTestCode(t, "package foo\nfunc transform(){\n"+code+"}")
+			require.Contains(t, code, "case \"text\":")
+			require.Contains(t, code, "case \"json\":")
+			testutil.AssertGo(t, "testdata/golden/go_transform_union_"+c.Name+".go.golden", code)
+		})
+	}
+}
+
+func TestGoTransformObjectFieldValueUnionDoesNotEmitNilGuard(t *testing.T) {
+	root := RunDSL(t, testdata.DeclarationAndConstructorUnionSymmetryDSL)
+	scope := NewNameScope()
+	defaultCtx := NewAttributeContext(false, false, true, "", scope)
+
+	container := root.UserType("ConstructorUnionContainer")
+	require.NotNil(t, container)
+
+	code, _, err := GoTransform(&expr.AttributeExpr{Type: container}, &expr.AttributeExpr{Type: container}, "source", "target", defaultCtx, defaultCtx, "", true)
+	require.NoError(t, err)
+	code = FormatTestCode(t, "package foo\nfunc transform(){\n"+code+"}")
+
+	require.Contains(t, code, "if source.Choice.Kind() != \"\" {")
+	require.NotContains(t, code, "if source.Choice != nil {")
+}

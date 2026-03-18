@@ -84,6 +84,9 @@ func TestClientTypes(t *testing.T) {
 		{"client-query-custom-name", testdata.PayloadQueryCustomNameDSL},
 		{"client-header-custom-name", testdata.PayloadHeaderCustomNameDSL},
 		{"client-cookie-custom-name", testdata.PayloadCookieCustomNameDSL},
+		{"client-constructor-union", testdata.ConstructorUnionHTTPDSL},
+		{"client-constructor-union-custom-keys", testdata.ConstructorUnionCustomKeysHTTPDSL},
+		{"client-nested-top-level-constructor-union-custom-keys", testdata.NestedTopLevelConstructorUnionCustomKeysHTTPDSL},
 	}
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {

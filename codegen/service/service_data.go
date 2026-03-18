@@ -1099,10 +1099,11 @@ func buildUnionTypeData(u *expr.Union, scope *codegen.NameScope, loc *codegen.Lo
 	name := scope.GoTypeName(att)
 	kindName := scope.Unique(name + "Kind")
 	unionPkg := loc.PackageName()
+	fieldNames := uniqueUnionFieldNames(u.Values)
 
 	fields := make([]*UnionFieldData, len(u.Values))
 	for i, nat := range u.Values {
-		fieldName := codegen.Goify(nat.Name, true)
+		fieldName := fieldNames[i]
 		var pkg string
 		if tloc := codegen.UserTypeLocation(nat.Attribute.Type); tloc != nil {
 			pkg = tloc.PackageName()
@@ -1114,7 +1115,7 @@ func buildUnionTypeData(u *expr.Union, scope *codegen.NameScope, loc *codegen.Lo
 		primitiveAliasType, hasPrimitiveAlias := primitiveAliasGoType(nat.Attribute.Type)
 		_, isUserType := nat.Attribute.Type.(expr.UserType)
 		emitPrimitiveAlias := hasPrimitiveAlias && !isUserType && pkg == ""
-		kindConst := kindName + codegen.Goify(nat.Name, true)
+		kindConst := kindName + fieldName
 		fields[i] = &UnionFieldData{
 			Name:               nat.Name,
 			KindConst:          kindConst,
@@ -1122,7 +1123,7 @@ func buildUnionTypeData(u *expr.Union, scope *codegen.NameScope, loc *codegen.Lo
 			FieldType:          fieldType,
 			EmitPrimitiveAlias: emitPrimitiveAlias,
 			PrimitiveAliasType: primitiveAliasType,
-			TypeTag:            nat.Name,
+			TypeTag:            expr.UnionVariantTag(nat),
 		}
 	}
 
@@ -1178,15 +1179,16 @@ func buildViewUnionTypeData(u *expr.Union, scope *codegen.NameScope, loc *codege
 	att := &expr.AttributeExpr{Type: u}
 	name := scope.GoTypeName(att)
 	kindName := scope.Unique(name + "Kind")
+	fieldNames := uniqueUnionFieldNames(u.Values)
 
 	fields := make([]*UnionFieldData, len(u.Values))
 	for i, nat := range u.Values {
-		fieldName := codegen.Goify(nat.Name, true)
+		fieldName := fieldNames[i]
 		fieldType := scope.GoTypeRef(nat.Attribute)
 		primitiveAliasType, hasPrimitiveAlias := primitiveAliasGoType(nat.Attribute.Type)
 		_, isUserType := nat.Attribute.Type.(expr.UserType)
 		emitPrimitiveAlias := hasPrimitiveAlias && !isUserType
-		kindConst := kindName + codegen.Goify(nat.Name, true)
+		kindConst := kindName + fieldName
 		fields[i] = &UnionFieldData{
 			Name:               nat.Name,
 			KindConst:          kindConst,
@@ -1194,7 +1196,7 @@ func buildViewUnionTypeData(u *expr.Union, scope *codegen.NameScope, loc *codege
 			FieldType:          fieldType,
 			EmitPrimitiveAlias: emitPrimitiveAlias,
 			PrimitiveAliasType: primitiveAliasType,
-			TypeTag:            nat.Name,
+			TypeTag:            expr.UnionVariantTag(nat),
 		}
 	}
 
@@ -1206,6 +1208,22 @@ func buildViewUnionTypeData(u *expr.Union, scope *codegen.NameScope, loc *codege
 		TypeKey:  u.GetTypeKey(),
 		ValueKey: u.GetValueKey(),
 	}
+}
+
+func uniqueUnionFieldNames(values []*expr.NamedAttributeExpr) []string {
+	bases := make([]string, len(values))
+	stableKeys := make([]string, len(values))
+	for i, nat := range values {
+		bases[i] = codegen.Goify(nat.Name, true)
+		stableKeys[i] = unionFieldStableKey(nat)
+	}
+	return expr.UniqueStableNames(bases, stableKeys, func(base string, ordinal int) string {
+		return fmt.Sprintf("%s%d", base, ordinal)
+	})
+}
+
+func unionFieldStableKey(nat *expr.NamedAttributeExpr) string {
+	return nat.Name + ":" + nat.Attribute.Type.Hash()
 }
 
 // sortedNamedAttributes returns object fields sorted by attribute name.

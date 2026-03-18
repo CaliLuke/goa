@@ -1,0 +1,133 @@
+openapi: 3.0.3
+info:
+    title: Goa API
+    version: 0.0.1
+servers:
+    - url: http://localhost:80
+      description: Default server for test api
+paths:
+    /:
+        post:
+            tags:
+                - ConstructorUnionCustomKeys
+            summary: Show ConstructorUnionCustomKeys
+            operationId: ConstructorUnionCustomKeys#Show
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            discriminator:
+                                mapping:
+                                    JSONPayload: '#/components/schemas/JSONPayloadOrTextPayloadJSONPayloadEnvelope4d704eedbb85e23f'
+                                    TextPayload: '#/components/schemas/JSONPayloadOrTextPayloadTextPayloadEnvelope334b543111996e4c'
+                                propertyName: kind
+                            example:
+                                data:
+                                    message: Doloremque autem.
+                                kind: JSONPayload
+                            oneOf:
+                                - $ref: '#/components/schemas/JSONPayloadOrTextPayloadJSONPayloadEnvelope4d704eedbb85e23f'
+                                - $ref: '#/components/schemas/JSONPayloadOrTextPayloadTextPayloadEnvelope334b543111996e4c'
+                            properties:
+                                data:
+                                    anyOf:
+                                        - $ref: '#/components/schemas/JSONPayload'
+                                        - $ref: '#/components/schemas/TextPayload'
+                                kind:
+                                    enum:
+                                        - JSONPayload
+                                        - TextPayload
+                                    type: string
+                            required:
+                                - kind
+                                - data
+                            type: object
+                        example:
+                            data:
+                                message: Doloremque autem.
+                            kind: JSONPayload
+            responses:
+                "200":
+                    description: OK response.
+                    content:
+                        application/json:
+                            schema:
+                                discriminator:
+                                    mapping:
+                                        JSONPayload: '#/components/schemas/JSONPayloadOrTextPayloadJSONPayloadEnvelope4d704eedbb85e23f'
+                                        TextPayload: '#/components/schemas/JSONPayloadOrTextPayloadTextPayloadEnvelope334b543111996e4c'
+                                    propertyName: kind
+                                example:
+                                    data:
+                                        message: Doloremque autem.
+                                    kind: JSONPayload
+                                oneOf:
+                                    - $ref: '#/components/schemas/JSONPayloadOrTextPayloadJSONPayloadEnvelope4d704eedbb85e23f'
+                                    - $ref: '#/components/schemas/JSONPayloadOrTextPayloadTextPayloadEnvelope334b543111996e4c'
+                                properties:
+                                    data:
+                                        anyOf:
+                                            - $ref: '#/components/schemas/JSONPayload'
+                                            - $ref: '#/components/schemas/TextPayload'
+                                    kind:
+                                        enum:
+                                            - JSONPayload
+                                            - TextPayload
+                                        type: string
+                                required:
+                                    - kind
+                                    - data
+                                type: object
+                            example:
+                                data:
+                                    message: Doloremque autem.
+                                kind: JSONPayload
+components:
+    schemas:
+        JSONPayload:
+            type: object
+            properties:
+                message:
+                    type: string
+                    example: Et tempora et quae.
+            example:
+                message: Itaque inventore optio.
+            required:
+                - message
+        JSONPayloadOrTextPayloadJSONPayloadEnvelope4d704eedbb85e23f:
+            type: object
+            properties:
+                data:
+                    $ref: '#/components/schemas/JSONPayload'
+                kind:
+                    type: string
+                    enum:
+                        - JSONPayload
+            required:
+                - kind
+                - data
+        JSONPayloadOrTextPayloadTextPayloadEnvelope334b543111996e4c:
+            type: object
+            properties:
+                data:
+                    $ref: '#/components/schemas/TextPayload'
+                kind:
+                    type: string
+                    enum:
+                        - TextPayload
+            required:
+                - kind
+                - data
+        TextPayload:
+            type: object
+            properties:
+                text:
+                    type: string
+                    example: Quia molestias.
+            example:
+                text: Doloribus qui quia.
+            required:
+                - text
+tags:
+    - name: ConstructorUnionCustomKeys
