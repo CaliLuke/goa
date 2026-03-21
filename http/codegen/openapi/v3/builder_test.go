@@ -310,7 +310,6 @@ func TestCollapseSchemaAliasesRewritesOperationRefs(t *testing.T) {
 	}
 }
 
-
 func TestNewBuildsReusableContractComponentsAndServiceTags(t *testing.T) {
 	root := codegen.RunDSL(t, testdata.OpenAPIReusableComponentsDSL)
 
